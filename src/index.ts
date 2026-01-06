@@ -41,6 +41,10 @@ import { AGENT_ECOSYSTEM, routeToAgent, getCollaborationPlan } from "./agents/ag
 import { validateGDScript, generateSmartCode, COMMON_PITFALLS, GAME_PATTERNS, PERFORMANCE_KNOWLEDGE } from "./knowledge/godot-brain.js";
 import { AdvancedAnalyzer } from "./analysis/advanced.js";
 
+// New modules
+import { EnvDoctor } from "./diagnostics/env-doctor.js";
+import { ShaderAnalyzer } from "./shaders/analyzer.js";
+
 // =============================================================================
 // SERVER INITIALIZATION
 // =============================================================================
@@ -53,6 +57,8 @@ const docs = new DocsProvider(config);
 const agents = new AgentManager(config);
 const codeGen = new CodeGenerator(config);
 const advanced = new AdvancedAnalyzer(config);
+const envDoctor = new EnvDoctor(config);
+const shaders = new ShaderAnalyzer(config);
 
 const server = new Server(
   {
@@ -276,6 +282,7 @@ const TOOLS = [
         path: { type: "string", description: "Test path or file" },
         filter: { type: "string", description: "Test name filter" },
         continue_on_failure: { type: "boolean", description: "Don't stop on failure" },
+        timeout: { type: "number", description: "Timeout in milliseconds (default: 300000 = 5 minutes)" },
       },
     },
   },
@@ -596,6 +603,96 @@ const TOOLS = [
       properties: {},
     },
   },
+
+  // =========================================================================
+  // ENVIRONMENT & DIAGNOSTICS TOOLS
+  // =========================================================================
+  {
+    name: "godot_env_doctor",
+    description: "Run comprehensive environment health check. Validates Godot setup, LSP, gdtoolkit, GdUnit4, and provides actionable remediation steps.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        verbose: { type: "boolean", description: "Return full JSON report instead of summary (default: false)" },
+      },
+    },
+  },
+
+  // =========================================================================
+  // SHADER TOOLS
+  // =========================================================================
+  {
+    name: "godot_analyze_shader",
+    description: "Deep analysis of a .gdshader file - uniforms, varyings, functions, complexity metrics, and performance hints.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        file: { type: "string", description: "Shader file path (.gdshader)" },
+      },
+      required: ["file"],
+    },
+  },
+  {
+    name: "godot_lint_shader",
+    description: "Lint a shader file for errors, warnings, deprecations, and performance issues.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        file: { type: "string", description: "Shader file path (.gdshader)" },
+      },
+      required: ["file"],
+    },
+  },
+  {
+    name: "godot_lint_all_shaders",
+    description: "Lint all shaders in the project and return comprehensive report.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "Directory to scan (default: project root)" },
+      },
+    },
+  },
+  {
+    name: "godot_shader_performance",
+    description: "Analyze shader performance - complexity score, grade, and optimization recommendations.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        file: { type: "string", description: "Shader file path (.gdshader)" },
+      },
+      required: ["file"],
+    },
+  },
+  {
+    name: "godot_find_shaders",
+    description: "Find all shaders in the project with summary of types, uniforms, and texture samples.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "Directory to scan (default: project root)" },
+      },
+    },
+  },
+  {
+    name: "godot_get_shader_docs",
+    description: "Get Godot shader documentation - built-in uniforms, render modes, GLSL functions by shader type.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        shader_type: {
+          type: "string",
+          enum: ["spatial", "canvas_item", "particles", "sky", "fog"],
+          description: "Shader type",
+        },
+        topic: {
+          type: "string",
+          enum: ["uniforms", "render_modes", "functions"],
+          description: "Documentation topic",
+        },
+      },
+    },
+  },
 ];
 
 // =============================================================================
@@ -848,6 +945,24 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         return await advanced.findDuplication(args as any);
       case "godot_complexity_heatmap":
         return await advanced.getComplexityHeatmap(args as any);
+
+      // Environment & diagnostics tools
+      case "godot_env_doctor":
+        return await envDoctor.runDiagnostics(args as any);
+
+      // Shader tools
+      case "godot_analyze_shader":
+        return await shaders.analyzeShader(args as any);
+      case "godot_lint_shader":
+        return await shaders.lintShader(args as any);
+      case "godot_lint_all_shaders":
+        return await shaders.lintAllShaders(args as any);
+      case "godot_shader_performance":
+        return await shaders.analyzeShaderPerformance(args as any);
+      case "godot_find_shaders":
+        return await shaders.findShaders(args as any);
+      case "godot_get_shader_docs":
+        return await shaders.getShaderDocs(args as any);
 
       default:
         return {

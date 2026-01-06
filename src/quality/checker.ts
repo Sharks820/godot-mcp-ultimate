@@ -346,8 +346,8 @@ export class QualityChecker {
     }
 
     return new Promise((resolve) => {
-      const args = dry_run ? ["--check", "--diff", filePath] : [filePath];
-      const proc = spawn("gdformat", args, { shell: true });
+      const spawnArgs = dry_run ? ["--check", "--diff", filePath] : [filePath];
+      const proc = spawn("gdformat", spawnArgs, { shell: true });
       let stdout = "";
       let stderr = "";
 

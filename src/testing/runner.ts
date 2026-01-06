@@ -61,8 +61,9 @@ export class TestRunner {
     path?: string;
     filter?: string;
     continue_on_failure?: boolean;
+    timeout?: number;
   }): Promise<any> {
-    const { path: testPath, filter, continue_on_failure = true } = args;
+    const { path: testPath, filter, continue_on_failure = true, timeout = 300000 } = args; // 5 min default timeout
 
     if (!this.gdunitPath) {
       return {
@@ -107,11 +108,48 @@ export class TestRunner {
 
       let stdout = "";
       let stderr = "";
+      let killed = false;
+
+      // Set up timeout
+      const timeoutId = setTimeout(() => {
+        killed = true;
+        proc.kill("SIGTERM");
+        // Force kill after 5 seconds if SIGTERM doesn't work
+        setTimeout(() => {
+          if (!proc.killed) {
+            proc.kill("SIGKILL");
+          }
+        }, 5000);
+      }, timeout);
 
       proc.stdout.on("data", (data) => (stdout += data.toString()));
       proc.stderr.on("data", (data) => (stderr += data.toString()));
 
       proc.on("close", (code) => {
+        clearTimeout(timeoutId);
+
+        if (killed) {
+          resolve({
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify(
+                  {
+                    exit_code: -1,
+                    success: false,
+                    error: `Test execution timed out after ${timeout / 1000} seconds`,
+                    partial_output: stdout.slice(0, 5000),
+                  },
+                  null,
+                  2
+                ),
+              },
+            ],
+            isError: true,
+          });
+          return;
+        }
+
         const results = this.parseTestOutput(stdout);
         resolve({
           content: [
@@ -139,6 +177,7 @@ export class TestRunner {
       });
 
       proc.on("error", (err) => {
+        clearTimeout(timeoutId);
         resolve({
           content: [
             {
