@@ -20,13 +20,61 @@ export class Config {
     this.config = this.loadConfig();
   }
 
+  /**
+   * Attempt to detect Godot executable path based on platform
+   */
+  private detectGodotPath(): string {
+    const platform = process.platform;
+
+    // Common paths to check based on platform
+    const possiblePaths: string[] = [];
+
+    if (platform === "win32") {
+      possiblePaths.push(
+        "C:/Program Files/Godot/Godot_v4.3-stable_win64.exe",
+        "C:/Program Files (x86)/Godot/Godot.exe",
+        `${process.env.LOCALAPPDATA}/Godot/Godot.exe`,
+        "godot.exe" // System PATH
+      );
+    } else if (platform === "darwin") {
+      possiblePaths.push(
+        "/Applications/Godot.app/Contents/MacOS/Godot",
+        "/usr/local/bin/godot",
+        "godot" // System PATH
+      );
+    } else {
+      // Linux and others
+      possiblePaths.push(
+        "/usr/bin/godot",
+        "/usr/local/bin/godot",
+        `${process.env.HOME}/.local/bin/godot`,
+        "godot" // System PATH
+      );
+    }
+
+    for (const p of possiblePaths) {
+      try {
+        if (fs.existsSync(p)) {
+          return p;
+        }
+      } catch {
+        // Path doesn't exist or isn't accessible
+      }
+    }
+
+    // Fallback to 'godot' and hope it's in PATH
+    console.error(
+      "WARNING: Godot executable not found. Set GODOT_PATH environment variable or add to .godot-mcp.json"
+    );
+    return "godot";
+  }
+
   private loadConfig(): GodotConfig {
     // Default configuration
+    // IMPORTANT: GODOT_PATH must be set via environment variable or .godot-mcp.json
     const defaults: GodotConfig = {
       projectPath: process.env.GODOT_PROJECT_PATH || process.cwd(),
-      godotPath:
-        process.env.GODOT_PATH ||
-        "C:/Users/Conner/AppData/Local/Microsoft/WinGet/Packages/GodotEngine.GodotEngine_Microsoft.Winget.Source_8wekyb3d8bbwe/Godot_v4.5.1-stable_win64_console.exe",
+      godotPath: process.env.GODOT_PATH || this.detectGodotPath(),
       lspPort: parseInt(process.env.GODOT_LSP_PORT || "6005", 10),
       gdtoolkitPath: process.env.GDTOOLKIT_PATH || null,
       gdunitPath: process.env.GDUNIT_PATH || null,

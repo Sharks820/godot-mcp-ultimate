@@ -276,6 +276,7 @@ const TOOLS = [
         path: { type: "string", description: "Test path or file" },
         filter: { type: "string", description: "Test name filter" },
         continue_on_failure: { type: "boolean", description: "Don't stop on failure" },
+        timeout: { type: "number", description: "Timeout in milliseconds (default: 300000 = 5 minutes)" },
       },
     },
   },
