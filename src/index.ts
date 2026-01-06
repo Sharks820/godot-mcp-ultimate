@@ -693,6 +693,52 @@ const TOOLS = [
       },
     },
   },
+
+  // =========================================================================
+  // PROJECT VALIDATION TOOLS (CRITICAL FOR CATCHING BUGS EARLY)
+  // =========================================================================
+  {
+    name: "godot_validate_scenes",
+    description: "Validate all scenes for broken references, missing scripts, invalid paths. Catches bugs BEFORE runtime!",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "Directory to validate (default: project root)" },
+      },
+    },
+  },
+  {
+    name: "godot_analyze_assets",
+    description: "Find unused assets, oversized files, and optimization opportunities. Reduce project bloat!",
+    inputSchema: {
+      type: "object",
+      properties: {},
+    },
+  },
+  {
+    name: "godot_validate_inputs",
+    description: "Validate input mappings - find undefined actions, unused inputs, and hardcoded action names.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+    },
+  },
+  {
+    name: "godot_validate_game_data",
+    description: "Validate VEILBREAKERS game data resources (skills, monsters, equipment) for missing/invalid fields.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+    },
+  },
+  {
+    name: "godot_find_unused_files",
+    description: "Find scripts, scenes, and resources that are never referenced anywhere. Clean up your project!",
+    inputSchema: {
+      type: "object",
+      properties: {},
+    },
+  },
 ];
 
 // =============================================================================
@@ -963,6 +1009,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         return await shaders.findShaders(args as any);
       case "godot_get_shader_docs":
         return await shaders.getShaderDocs(args as any);
+
+      // Project validation tools (NEW - CRITICAL FOR BUG PREVENTION)
+      case "godot_validate_scenes":
+        return await advanced.validateScenes(args as any);
+      case "godot_analyze_assets":
+        return await advanced.analyzeAssets(args as any);
+      case "godot_validate_inputs":
+        return await advanced.validateInputMappings(args as any);
+      case "godot_validate_game_data":
+        return await advanced.validateGameData(args as any);
+      case "godot_find_unused_files":
+        return await advanced.findUnusedFiles(args as any);
 
       default:
         return {
