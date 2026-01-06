@@ -1,0 +1,46 @@
+{
+  "name": "godot-mcp-ultimate",
+  "version": "1.0.0",
+  "description": "The ULTIMATE MCP server for Godot game development - semantic analysis, testing, quality, and sub-agents",
+  "main": "dist/index.js",
+  "type": "module",
+  "bin": {
+    "godot-mcp-ultimate": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js",
+    "lint": "eslint src --ext .ts",
+    "test": "vitest"
+  },
+  "keywords": [
+    "mcp",
+    "godot",
+    "gdscript",
+    "game-development",
+    "lsp",
+    "testing",
+    "linting",
+    "semantic-analysis"
+  ],
+  "author": "VEILBREAKERS",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "vscode-languageclient": "^9.0.1",
+    "vscode-languageserver-protocol": "^3.17.5",
+    "fast-glob": "^3.3.2",
+    "fast-xml-parser": "^4.3.2",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2",
+    "tsx": "^4.19.2",
+    "vitest": "^2.1.8"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
